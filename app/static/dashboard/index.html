@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Solar Souq Control Deck</title>
+  <link rel="stylesheet" href="/dashboard/assets/styles.css">
+</head>
+<body>
+  <main class="deck">
+    <header class="hero">
+      <div>
+        <p class="kicker">A2A Test Console</p>
+        <h1>Solar Souq Control Deck</h1>
+        <p class="lede">
+          Visual dashboard for buyer and seller testing across DB, local EVM, and Anvil RPC backends.
+        </p>
+      </div>
+      <div class="hero-actions">
+        <div id="backend-badge" class="badge">ledger: loading</div>
+        <button id="refresh-state" class="btn btn-solid" type="button">Refresh</button>
+      </div>
+    </header>
+
+    <section class="panel">
+      <h2>1. Create Agents</h2>
+      <form id="agent-form" class="grid grid-4">
+        <label>Name<input id="agent-name" type="text" value="buyer-ui" required></label>
+        <label>Role
+          <select id="agent-role">
+            <option value="buyer">Buyer</option>
+            <option value="seller">Seller</option>
+          </select>
+        </label>
+        <label>SKUs comma-list<input id="agent-skus" type="text" placeholder="json_extraction"></label>
+        <label>Capabilities<input id="agent-caps" type="text" placeholder="verifiable_output"></label>
+        <label>Tags<input id="agent-tags" type="text" placeholder="trusted"></label>
+        <label class="span-3">Card Description<input id="agent-desc" type="text" placeholder="What this agent offers"></label>
+        <button class="btn btn-outline" type="submit">Create Agent</button>
+      </form>
+
+      <form id="faucet-form" class="grid grid-3">
+        <label>Buyer
+          <select id="faucet-agent" required></select>
+        </label>
+        <label>Faucet Amount<input id="faucet-amount" type="number" min="1" value="100" required></label>
+        <button class="btn btn-solid" type="submit">Mint Credits</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>2. Listings and Search</h2>
+      <form id="listing-form" class="grid grid-4">
+        <label>Agent
+          <select id="listing-agent" required></select>
+        </label>
+        <label>Kind
+          <select id="listing-kind">
+            <option value="demand">Demand</option>
+            <option value="offer">Offer</option>
+          </select>
+        </label>
+        <label>SKU<input id="listing-sku" type="text" value="json_extraction" required></label>
+        <label>Price<input id="listing-price" type="number" min="1" value="10" required></label>
+        <label class="span-3">Description<input id="listing-description" type="text" value="Need json_extraction result" required></label>
+        <button class="btn btn-outline" type="submit">Create Listing</button>
+      </form>
+
+      <form id="search-form" class="grid grid-4">
+        <label>Buyer
+          <select id="search-buyer" required></select>
+        </label>
+        <label>SKU<input id="search-sku" type="text" value="json_extraction" required></label>
+        <label>Max Price<input id="search-max-price" type="number" min="1" value="10"></label>
+        <label>Require Online
+          <select id="search-online">
+            <option value="false" selected>No</option>
+            <option value="true">Yes</option>
+          </select>
+        </label>
+        <label>Capabilities<input id="search-caps" type="text" value="verifiable_output"></label>
+        <label>Tags<input id="search-tags" type="text" value="trusted"></label>
+        <label>Include Non-Matching
+          <select id="search-non-matching">
+            <option value="true" selected>Yes</option>
+            <option value="false">No</option>
+          </select>
+        </label>
+        <button class="btn btn-solid" type="submit">Search Sellers</button>
+      </form>
+
+      <div>
+        <h3>Search Results</h3>
+        <div id="search-results" class="cards"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>3. Contract, Delivery, Settlement</h2>
+      <form id="handshake-form" class="grid grid-4">
+        <label>Buyer
+          <select id="handshake-buyer" required></select>
+        </label>
+        <label>Demand Listing ID<input id="handshake-demand" type="text" required></label>
+        <label>Offer Listing ID<input id="handshake-offer" type="text" required></label>
+        <label>Price Override<input id="handshake-price" type="number" min="1" placeholder="optional"></label>
+        <label class="span-3">Terms JSON
+          <textarea id="handshake-terms" rows="4">{"query":"Extract records","input":{"records":[{"id":1,"source":"dashboard"}]}}</textarea>
+        </label>
+        <button class="btn btn-solid" type="submit">Handshake + Activate</button>
+      </form>
+
+      <form id="deliver-form" class="grid grid-3">
+        <label>Seller
+          <select id="deliver-seller" required></select>
+        </label>
+        <label>Contract ID<input id="deliver-contract" type="text" required></label>
+        <label class="span-2">Payload JSON
+          <textarea id="deliver-payload" rows="3">{"records":[{"id":1,"source":"seller"}]}</textarea>
+        </label>
+        <button class="btn btn-outline" type="submit">Deliver Artifact</button>
+      </form>
+
+      <form id="artifact-form" class="grid grid-3">
+        <label>Buyer
+          <select id="artifact-buyer" required></select>
+        </label>
+        <label>Contract ID<input id="artifact-contract" type="text" required></label>
+        <button class="btn btn-outline" type="submit">Decrypt Artifact</button>
+      </form>
+      <pre id="artifact-output" class="output"></pre>
+
+      <form id="decision-form" class="grid grid-3">
+        <label>Buyer
+          <select id="decision-buyer" required></select>
+        </label>
+        <label>Contract ID<input id="decision-contract" type="text" required></label>
+        <label>Decision
+          <select id="decision-accept">
+            <option value="true" selected>Accept and payout seller</option>
+            <option value="false">Reject and refund buyer</option>
+          </select>
+        </label>
+        <button class="btn btn-solid" type="submit">Settle</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Live State</h2>
+      <div class="columns">
+        <div>
+          <h3>Agents</h3>
+          <div id="agents-table" class="table"></div>
+        </div>
+        <div>
+          <h3>Listings</h3>
+          <div id="listings-table" class="table"></div>
+        </div>
+        <div>
+          <h3>Contracts</h3>
+          <div id="contracts-table" class="table"></div>
+        </div>
+      </div>
+      <h3>Ledger Entries</h3>
+      <div id="ledger-table" class="table"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Activity Log</h2>
+      <pre id="events" class="output"></pre>
+    </section>
+  </main>
+
+  <script type="module" src="/dashboard/assets/app.js"></script>
+</body>
+</html>

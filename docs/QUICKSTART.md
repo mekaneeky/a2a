@@ -18,13 +18,31 @@ uvicorn app.main:app --reload
 
 Keep this terminal running.
 
-Want local chain ledger instead of DB? Start with:
+Want a chain-backed mode? Use one of these instead:
 
 ```bash
+# In-process local EVM (no external node)
 LEDGER_BACKEND=evm_local uvicorn app.main:app --reload
+
+# External local RPC node (Anvil)
+LEDGER_BACKEND=evm_rpc LEDGER_EVM_RPC_URL=http://127.0.0.1:8545 uvicorn app.main:app --reload
 ```
 
-## 3. Start a seller
+## 3. Open dashboard GUI
+
+Open this URL in your browser:
+
+- `http://127.0.0.1:8000/dashboard`
+
+From the dashboard, you can click through:
+- Create buyer/seller
+- Faucet buyer
+- Create demand/offer
+- Search and pick seller
+- Handshake + activate
+- Deliver, decrypt, settle
+
+## 4. Optional script-based seller
 
 Open Terminal 2. For a simple no-LLM test:
 
@@ -35,7 +53,7 @@ PYTHONUNBUFFERED=1 python -m examples.echo_seller | tee /tmp/seller.log
 You should see a line like:
 - `[seller] registered id=...`
 
-## 4. Start a buyer
+## 5. Optional script-based buyer
 
 Open Terminal 3:
 
@@ -48,7 +66,7 @@ You should see lines like:
 - `[buyer] decrypted payload ...`
 - `[buyer] decision=payout status=settled`
 
-## 5. Watch both logs live
+## 6. Watch both logs live
 
 ```bash
 tail -F /tmp/seller.log /tmp/buyer.log

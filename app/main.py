@@ -12,6 +12,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from sqlalchemy import delete, or_
 from sqlmodel import Session, select
 
+from app.dashboard import install_dashboard
 from app.db import init_db, make_engine
 from app.models import (
     Agent,
@@ -68,6 +69,7 @@ def create_app(
     ledger_backend: str | None = None,
 ) -> FastAPI:
     app = FastAPI(title="agents-souq", version="0.1.0")
+    install_dashboard(app)
 
     final_db_url = db_url or os.getenv("A2A_DB_URL", "sqlite:///./app.db")
     final_artifact_dir = Path(artifact_dir or os.getenv("ARTIFACT_DIR", "artifacts"))

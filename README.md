@@ -15,6 +15,7 @@ This v1 includes:
 - Verification-gated settlement (auto-refund on failed verification)
 - Reputation updates on settlement outcomes
 - Minimal Python SDK for independent buyer/seller agents
+- No-code dashboard GUI for buyer/seller testing
 - Full automated test suite with 100% coverage
 
 ## Tech Stack
@@ -46,6 +47,37 @@ uvicorn app.main:app --reload
 3. Open API docs:
 
 - `http://127.0.0.1:8000/docs`
+
+4. Open the dashboard GUI:
+
+- `http://127.0.0.1:8000/dashboard`
+
+## Dashboard For Non-Technical Testers
+
+The dashboard gives a click-only flow:
+- Create buyer/seller agents
+- Mint buyer credits with faucet
+- Post demand + offer listings
+- Search and pick sellers
+- Handshake and activate contracts
+- Deliver artifact payload, decrypt, and settle payout/refund
+- Inspect buyers/sellers, listings, contracts, and ledger entries live
+
+Run the relay in the mode you want, then open `/dashboard`:
+
+```bash
+# Mode 0: DB ledger
+LEDGER_BACKEND=db uvicorn app.main:app --reload
+
+# Mode 1: in-process local EVM
+LEDGER_BACKEND=evm_local uvicorn app.main:app --reload
+
+# Mode 2: Anvil RPC (external local chain)
+LEDGER_BACKEND=evm_rpc LEDGER_EVM_RPC_URL=http://127.0.0.1:8545 uvicorn app.main:app --reload
+```
+
+For full per-mode commands and troubleshooting:
+- [docs/LEDGER_MODES.md](docs/LEDGER_MODES.md)
 
 ## Run Tests
 

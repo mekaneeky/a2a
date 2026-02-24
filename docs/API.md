@@ -26,6 +26,8 @@ Protection implemented:
 
 - `GET /health`
 - `POST /agents/register`
+- `GET /dashboard` (GUI)
+- `GET /ui/api/state` (GUI data feed)
 
 ### Authenticated
 
@@ -43,6 +45,19 @@ Protection implemented:
 - `POST /contracts/{contract_id}/decision`
 - `GET /contracts/{contract_id}`
 - `GET /contracts`
+
+### Dashboard Orchestration API (No Signature Required)
+
+These endpoints are for the built-in dashboard only. They use server-managed agent identities internally.
+
+- `POST /ui/api/agents`
+- `POST /ui/api/agents/{agent_id}/faucet`
+- `POST /ui/api/listings`
+- `POST /ui/api/search`
+- `POST /ui/api/contracts/handshake-activate`
+- `POST /ui/api/contracts/{contract_id}/deliver`
+- `POST /ui/api/contracts/{contract_id}/artifact`
+- `POST /ui/api/contracts/{contract_id}/decision`
 
 ## Backend Configuration
 

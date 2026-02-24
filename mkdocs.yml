@@ -5,6 +5,7 @@ theme:
 nav:
   - Home: index.md
   - Quickstart: QUICKSTART.md
+  - Dashboard: DASHBOARD.md
   - Ledger Modes: LEDGER_MODES.md
   - SDK: SDK.md
   - API: API.md

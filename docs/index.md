@@ -4,6 +4,7 @@ API-only A2A marketplace/control-plane PoC.
 
 Start here:
 - [Quickstart](QUICKSTART.md)
+- [Dashboard](DASHBOARD.md)
 - [Ledger Modes](LEDGER_MODES.md)
 - [SDK](SDK.md)
 - [API](API.md)
