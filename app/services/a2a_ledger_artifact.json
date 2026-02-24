@@ -1,0 +1,354 @@
+{
+  "contractName": "A2ALedger",
+  "compiler": "0.8.24",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "operator_",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "agent",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "txId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "Faucet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "contractId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "seller",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "txId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "Payout",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "contractId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "buyer",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "txId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "Refund",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "contractId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "buyer",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "txId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "Reserve",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "fromAccount",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "toAccount",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "txId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "allowOverdraft",
+          "type": "bool"
+        }
+      ],
+      "name": "Transfer",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "account",
+          "type": "bytes32"
+        }
+      ],
+      "name": "balanceOf",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "contractId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "escrowOf",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "agent",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "txId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "faucet",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "operator",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "contractId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "seller",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "txId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "payout",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "contractId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "buyer",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "txId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "refund",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "contractId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "buyer",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "txId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "reserve",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "fromAccount",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "toAccount",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "txId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bool",
+          "name": "allowOverdraft",
+          "type": "bool"
+        }
+      ],
+      "name": "transfer",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x60a060405234801561000f575f80fd5b5060405161083f38038061083f83398101604081905261002e9161003f565b6001600160a01b031660805261006c565b5f6020828403121561004f575f80fd5b81516001600160a01b0381168114610065575f80fd5b9392505050565b6080516107996100a65f395f818160c9015281816101850152818161029f015281816103bc015281816104c301526105c001526107995ff3fe608060405234801561000f575f80fd5b5060043610610085575f3560e01c8063643ea2df11610058578063643ea2df146101085780636c7f15421461011b57806383a265a7146101485780639380446214610167575f80fd5b806306de0ad31461008957806324838fee1461009e5780632720d03a146100b1578063570ca735146100c4575b5f80fd5b61009c61009736600461065b565b61017a565b005b61009c6100ac36600461068a565b610294565b61009c6100bf3660046106d7565b6103b1565b6100eb7f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020015b60405180910390f35b61009c6101163660046106d7565b6104b8565b61013a610129366004610700565b5f9081526020819052604090205490565b6040519081526020016100ff565b61013a610156366004610700565b5f9081526001602052604090205490565b61009c6101753660046106d7565b6105b5565b336001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016146101cb5760405162461bcd60e51b81526004016101c290610717565b60405180910390fd5b5f838152602081905260409020548281101561021e5760405162461bcd60e51b8152602060048201526012602482015271696e73756666696369656e742066756e647360701b60448201526064016101c2565b5f84815260208181526040808320868503905587835260019091528120805485929061024b90849061073e565b90915550506040805184815260208101849052859187917f13770ae3781457746e0d38497469d9b10d2c858cd916f6cb2e9296bfc70c8b54910160405180910390a35050505050565b336001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016146102dc5760405162461bcd60e51b81526004016101c290610717565b80610348575f85815260208190526040902054838110156103345760405162461bcd60e51b8152602060048201526012602482015271696e73756666696369656e742066756e647360701b60448201526064016101c2565b5f8681526020819052604090209084900390555b5f848152602081905260408120805485929061036590849061073e565b90915550506040805184815282151560208201528391869188917fed19312ad85d730e5cc46aa8f40147e481460d38d8fdd86eed67289ca5b1380d910160405180910390a45050505050565b336001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016146103f95760405162461bcd60e51b81526004016101c290610717565b5f83815260016020526040902054806104435760405162461bcd60e51b815260206004820152600c60248201526b656d70747920657363726f7760a01b60448201526064016101c2565b5f848152600160209081526040808320839055858352908290528120805483929061046f90849061073e565b90915550506040805182815260208101849052849186917f96c55df470819560fa156112322e513d68548367ef23569a877521f95563025f91015b60405180910390a350505050565b336001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016146105005760405162461bcd60e51b81526004016101c290610717565b5f838152600160205260409020548061054a5760405162461bcd60e51b815260206004820152600c60248201526b656d70747920657363726f7760a01b60448201526064016101c2565b5f848152600160209081526040808320839055858352908290528120805483929061057690849061073e565b90915550506040805182815260208101849052849186917f2bf231dafbec36483670370f777806e2bf2768bf5705dd0f5374a725bdd1107991016104aa565b336001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016146105fd5760405162461bcd60e51b81526004016101c290610717565b5f838152602081905260408120805484929061061a90849061073e565b9091555050604051828152819084907fae3c9fe1d539f0a6b09412b266f465aed40c983dcd38c9a06f3e09198dab6c539060200160405180910390a3505050565b5f805f806080858703121561066e575f80fd5b5050823594602084013594506040840135936060013592509050565b5f805f805f60a0868803121561069e575f80fd5b85359450602086013593506040860135925060608601359150608086013580151581146106c9575f80fd5b809150509295509295909350565b5f805f606084860312156106e9575f80fd5b505081359360208301359350604090920135919050565b5f60208284031215610710575f80fd5b5035919050565b6020808252600d908201526c37b7363c9037b832b930ba37b960991b604082015260600190565b8082018082111561075d57634e487b7160e01b5f52601160045260245ffd5b9291505056fea26469706673582212204ad323f297faaa6fd5c949744b629c51f41d166b246d8ca5f41dcd367e2cc53464736f6c63430008180033"
+}

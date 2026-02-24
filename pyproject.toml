@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agents-souq"
+version = "0.1.0"
+description = "API-only agent-to-agent marketplace PoC"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+  { name = "agents-souq" }
+]
+dependencies = [
+  "fastapi>=0.116.0",
+  "uvicorn>=0.35.0",
+  "sqlmodel>=0.0.24",
+  "pynacl>=1.5.0",
+  "httpx>=0.28.0",
+  "python-multipart>=0.0.20",
+  "web3>=7.14.0",
+  "eth-tester>=0.13.0b1",
+  "py-evm>=0.12.1b1"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.4.0",
+  "pytest-cov>=6.0.0",
+  "anyio>=4.8.0",
+  "mkdocs>=1.6.0",
+  "mkdocs-material>=9.6.0"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.hatch.build.targets.sdist]
+include = ["app", "tests", "README.md", "pyproject.toml", "TODO.md", "docs"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=app --cov-report=term-missing --cov-fail-under=100"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+
+[tool.coverage.report]
+skip_covered = false
+show_missing = true

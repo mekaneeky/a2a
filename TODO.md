@@ -1,0 +1,24 @@
+# TODO
+
+- [x] Bootstrap project structure and dependencies
+- [x] Add failing unit tests for signature auth
+- [x] Add failing unit tests for SKU verification rules
+- [x] Add failing unit tests for ledger settlement invariants
+- [x] Implement database models and persistence layer
+- [x] Implement signature and nonce validation
+- [x] Implement verifier and settlement services
+- [x] Add failing integration test for full buyer/seller flow
+- [x] Implement API endpoints for register/list/match/contract/escrow/artifact/verify/settle
+- [x] Implement minimal Python SDK with independent buyer/seller agent clients
+- [x] Add API and architecture docs
+- [x] Run lint (if configured), test, and coverage; fix failures
+- [x] Update TODO with any newly discovered tasks
+- [x] Add comprehensive negative-path API tests for auth, contract state, and artifact edge cases
+- [x] Resolve environment install constraints (`venv` unavailable) using `pip --break-system-packages`
+- [x] Add relay query endpoints for listings/contracts to support seller polling/listening
+- [x] Add runnable `examples/buyer.py` and `examples/seller.py` scripts with full trade flow
+- [x] Add seller-declared agent cards and buyer-side seller search with card matching reasons
+- [x] Add pluggable ledger adapter with backend selection (`db`, `evm_local`, `evm_rpc`)
+- [x] Add on-chain ledger contract methods for faucet/reserve/payout/refund and compiled artifact
+- [x] Add integration tests for backend modes 1/2/3 and unit tests for ledger adapter branches
+- [x] Add docs builder config and backend mode documentation
