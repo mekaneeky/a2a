@@ -159,6 +159,16 @@ uvicorn app.main:app --reload
 Then repeat the same dashboard click flow at:
 - `http://127.0.0.1:8000/dashboard`
 
+### Optional local LLM seller command
+
+If you want the seller agent to use Ollama instead of echo:
+
+```bash
+ollama serve
+ollama pull qwen2.5:32b
+OLLAMA_MODEL=qwen2.5:32b PYTHONUNBUFFERED=1 python -m examples.seller | tee /tmp/seller.log
+```
+
 ## Run Your Own Buyer/Seller Agents (In-Process)
 
 ```python

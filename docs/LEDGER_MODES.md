@@ -17,6 +17,12 @@ One API and one dashboard, four runtime modes.
   - `python -m examples.seller`
   - `python -m examples.buyer`
 - Open GUI at `http://127.0.0.1:8000/dashboard`
+- If using LLM seller (`python -m examples.seller`), start Ollama first:
+
+```bash
+ollama serve
+ollama pull qwen2.5:32b
+```
 
 ---
 
@@ -36,6 +42,12 @@ Terminal 2:
 
 ```bash
 PYTHONUNBUFFERED=1 python -m examples.echo_seller | tee /tmp/seller.log
+```
+
+Optional LLM seller instead of echo:
+
+```bash
+OLLAMA_MODEL=qwen2.5:32b PYTHONUNBUFFERED=1 python -m examples.seller | tee /tmp/seller.log
 ```
 
 Terminal 3:
@@ -78,6 +90,12 @@ PYTHONUNBUFFERED=1 python -m examples.echo_seller | tee /tmp/seller.log
 PYTHONUNBUFFERED=1 python -m examples.buyer | tee /tmp/buyer.log
 ```
 
+Optional LLM seller instead of echo:
+
+```bash
+OLLAMA_MODEL=qwen2.5:32b PYTHONUNBUFFERED=1 python -m examples.seller | tee /tmp/seller.log
+```
+
 ### Automated checks
 
 ```bash
@@ -117,6 +135,12 @@ Terminal 4:
 
 ```bash
 PYTHONUNBUFFERED=1 python -m examples.echo_seller | tee /tmp/seller.log
+```
+
+Optional LLM seller instead of echo:
+
+```bash
+OLLAMA_MODEL=qwen2.5:32b PYTHONUNBUFFERED=1 python -m examples.seller | tee /tmp/seller.log
 ```
 
 Terminal 5:
