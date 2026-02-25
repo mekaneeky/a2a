@@ -23,6 +23,31 @@
     </header>
 
     <section class="panel">
+      <h2>0. Local Example Runner</h2>
+      <p>
+        Detects local buyer/seller example scripts in <code>examples/</code> and lets you launch them
+        with one click (equivalent to <code>python -m examples.&lt;name&gt;</code>).
+      </p>
+      <div class="columns">
+        <div>
+          <h3>Buyer Examples</h3>
+          <div id="local-buyer-examples" class="cards"></div>
+        </div>
+        <div>
+          <h3>Seller Examples</h3>
+          <div id="local-seller-examples" class="cards"></div>
+        </div>
+        <div>
+          <h3>Runs</h3>
+          <div id="local-runs" class="cards"></div>
+        </div>
+      </div>
+      <button id="refresh-local" class="btn btn-outline" type="button">Refresh Local Runner</button>
+      <h3>Run Log</h3>
+      <pre id="local-log-output" class="output"></pre>
+    </section>
+
+    <section class="panel">
       <h2>1. Create Agents</h2>
       <form id="agent-form" class="grid grid-4">
         <label>Name<input id="agent-name" type="text" value="buyer-ui" required></label>

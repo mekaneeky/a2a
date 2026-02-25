@@ -20,6 +20,7 @@ site/
 
 # Logs
 *.log
+.dashboard-runs/
 
 # OS/editor
 .DS_Store

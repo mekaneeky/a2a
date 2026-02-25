@@ -2,11 +2,16 @@ from __future__ import annotations
 
 import base64
 import json
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
 from pathlib import Path
+from uuid import uuid4
 from typing import Any, Literal
 
 import httpx
-from fastapi import APIRouter, FastAPI, HTTPException, Request, status
+from fastapi import APIRouter, FastAPI, HTTPException, Query, Request, status
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.testclient import TestClient
@@ -74,15 +79,115 @@ class UiDecisionRequest(BaseModel):
     accept: bool
 
 
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
 def _dashboard_static_dir() -> Path:
     return Path(__file__).resolve().parent / "static" / "dashboard"
+
+
+def _dashboard_project_root() -> Path:
+    return Path(__file__).resolve().parent.parent
+
+
+def _dashboard_examples_dir() -> Path:
+    return _dashboard_project_root() / "examples"
+
+
+def _dashboard_run_logs_dir() -> Path:
+    run_logs_dir = _dashboard_project_root() / ".dashboard-runs"
+    run_logs_dir.mkdir(parents=True, exist_ok=True)
+    return run_logs_dir
+
+
+def _dashboard_agents_store_path() -> Path:
+    configured = os.getenv("A2A_DASHBOARD_AGENTS_FILE")
+    if configured:
+        path = Path(configured)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        return path
+    return _dashboard_run_logs_dir() / "agents.json"
+
+
+def _serialize_identity(identity: AgentIdentity) -> dict[str, Any]:
+    return {
+        "name": identity.name,
+        "sign_private": identity.sign_private,
+        "sign_public": identity.sign_public,
+        "encrypt_private": identity.encrypt_private,
+        "encrypt_public": identity.encrypt_public,
+        "agent_id": identity.agent_id,
+    }
+
+
+def _deserialize_identity(payload: dict[str, Any]) -> AgentIdentity | None:
+    required = {"name", "sign_private", "sign_public", "encrypt_private", "encrypt_public", "agent_id"}
+    if not required.issubset(payload.keys()):
+        return None
+    return AgentIdentity(
+        name=str(payload["name"]),
+        sign_private=str(payload["sign_private"]),
+        sign_public=str(payload["sign_public"]),
+        encrypt_private=str(payload["encrypt_private"]),
+        encrypt_public=str(payload["encrypt_public"]),
+        agent_id=str(payload["agent_id"]) if payload.get("agent_id") else None,
+    )
+
+
+def _load_ui_store_from_disk() -> dict[str, dict[str, Any]]:
+    path = _dashboard_agents_store_path()
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    store: dict[str, dict[str, Any]] = {}
+    for agent_id, row in payload.items():
+        if not isinstance(agent_id, str) or not isinstance(row, dict):
+            continue
+        identity_payload = row.get("identity")
+        if not isinstance(identity_payload, dict):
+            continue
+        identity = _deserialize_identity(identity_payload)
+        if identity is None:
+            continue
+        role = row.get("role")
+        normalized_role = str(role) if role in {"buyer", "seller"} else None
+        store[agent_id] = {"identity": identity, "role": normalized_role}
+    return store
+
+
+def _persist_ui_store(app: FastAPI) -> None:
+    path = _dashboard_agents_store_path()
+    raw_store = getattr(app.state, "dashboard_agents", None) or {}
+    payload = {
+        agent_id: {
+            "identity": _serialize_identity(row["identity"]),
+            "role": row.get("role"),
+        }
+        for agent_id, row in raw_store.items()
+        if isinstance(agent_id, str) and isinstance(row, dict) and isinstance(row.get("identity"), AgentIdentity)
+    }
+    path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
 
 
 def _ui_store(app: FastAPI) -> dict[str, dict[str, Any]]:
     store = getattr(app.state, "dashboard_agents", None)
     if store is None:
-        store = {}
+        store = _load_ui_store_from_disk()
         app.state.dashboard_agents = store
+    return store
+
+
+def _local_run_store(app: FastAPI) -> dict[str, dict[str, Any]]:
+    store = getattr(app.state, "dashboard_local_runs", None)
+    if store is None:
+        store = {}
+        app.state.dashboard_local_runs = store
     return store
 
 
@@ -132,6 +237,145 @@ def _run_as_agent(app: FastAPI, identity: AgentIdentity, func):
         raise _internal_api_error(exc) from exc
 
 
+def _classify_example_role(path: Path) -> Literal["buyer", "seller"] | None:
+    stem = path.stem.lower()
+    if "buyer" in stem:
+        return "buyer"
+    if "seller" in stem:
+        return "seller"
+    try:
+        source = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    if "BuyerApp" in source or "BuyerTask" in source:
+        return "buyer"
+    if "SellerApp" in source or "SellerTask" in source:
+        return "seller"
+    return None
+
+
+def _discover_local_examples() -> list[dict[str, str]]:
+    examples_dir = _dashboard_examples_dir()
+    if not examples_dir.exists():
+        return []
+    examples: list[dict[str, str]] = []
+    for path in sorted(examples_dir.glob("*.py")):
+        if path.stem in {"__init__", "agent_apps"} or path.name.startswith("_"):
+            continue
+        role = _classify_example_role(path)
+        if role is None:
+            continue
+        module = f"examples.{path.stem}"
+        examples.append(
+            {
+                "id": path.stem,
+                "role": role,
+                "module": module,
+                "command": f"{Path(sys.executable).name} -m {module}",
+                "path": str(path.relative_to(_dashboard_project_root())),
+            }
+        )
+    return examples
+
+
+def _example_by_id(example_id: str) -> dict[str, str]:
+    for example in _discover_local_examples():
+        if example["id"] == example_id:
+            return example
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown local example")
+
+
+def _local_run_payload(run_id: str, entry: dict[str, Any]) -> dict[str, Any]:
+    process = entry.get("process")
+    returncode = process.poll() if process is not None else entry.get("returncode")
+    if returncode is not None and entry.get("ended_at") is None:
+        entry["ended_at"] = _utc_now_iso()
+        entry["returncode"] = returncode
+    status_value = "running" if returncode is None else ("exited" if returncode == 0 else "failed")
+    return {
+        "run_id": run_id,
+        "example_id": entry["example_id"],
+        "role": entry["role"],
+        "module": entry["module"],
+        "pid": process.pid if process is not None else entry.get("pid"),
+        "status": status_value,
+        "returncode": returncode,
+        "started_at": entry.get("started_at"),
+        "ended_at": entry.get("ended_at"),
+        "log_path": entry.get("log_path"),
+    }
+
+
+def _local_runs_payload(app: FastAPI) -> list[dict[str, Any]]:
+    rows = [
+        _local_run_payload(run_id, entry)
+        for run_id, entry in _local_run_store(app).items()
+    ]
+    rows.sort(key=lambda row: str(row.get("started_at", "")), reverse=True)
+    return rows
+
+
+def _stop_local_run(app: FastAPI, run_id: str) -> dict[str, Any]:
+    entry = _local_run_store(app).get(run_id)
+    if entry is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown local run")
+    process = entry.get("process")
+    if process is not None and process.poll() is None:
+        process.terminate()
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=5)
+    entry["ended_at"] = _utc_now_iso()
+    return _local_run_payload(run_id, entry)
+
+
+def _tail_file(path: Path, tail: int) -> str:
+    if not path.exists():
+        return ""
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return ""
+    lines = text.splitlines()
+    return "\n".join(lines[-tail:])
+
+
+def _infer_agent_roles(
+    *,
+    agent_id: str,
+    agent_name: str,
+    ui_role: str | None,
+    demand_listing_agents: set[str],
+    offer_listing_agents: set[str],
+    buyer_contract_agents: set[str],
+    seller_contract_agents: set[str],
+) -> tuple[list[str], str | None, str | None]:
+    roles: set[str] = set()
+    explicit_role = ui_role if ui_role in {"buyer", "seller"} else None
+    if explicit_role is not None:
+        roles.add(explicit_role)
+    if agent_id in demand_listing_agents or agent_id in buyer_contract_agents:
+        roles.add("buyer")
+    if agent_id in offer_listing_agents or agent_id in seller_contract_agents:
+        roles.add("seller")
+    if not roles:
+        lowered = agent_name.lower()
+        if "buyer" in lowered:
+            roles.add("buyer")
+        if "seller" in lowered:
+            roles.add("seller")
+    ordered = [role for role in ("buyer", "seller") if role in roles]
+    if explicit_role is not None:
+        return ordered, explicit_role, "ui_managed"
+    if len(ordered) == 1:
+        return ordered, ordered[0], "inferred"
+    if len(ordered) == 2:
+        return ordered, "buyer,seller", "inferred"
+    return [], None, None
+
+
 def _state_payload(request: Request) -> dict[str, Any]:
     store = _ui_store(request.app)
     ledger = request.app.state.ledger_backend
@@ -146,11 +390,25 @@ def _state_payload(request: Request) -> dict[str, Any]:
 
         card_map = {card.agent_id: card for card in cards}
         heartbeat_map = {item.agent_id: item.last_seen_at for item in heartbeats}
+        demand_listing_agents = {item.agent_id for item in listings if item.kind == ListingKind.DEMAND}
+        offer_listing_agents = {item.agent_id for item in listings if item.kind == ListingKind.OFFER}
+        buyer_contract_agents = {item.buyer_id for item in contracts}
+        seller_contract_agents = {item.seller_id for item in contracts}
 
         agent_rows = []
         for agent in agents:
             card = card_map.get(agent.id)
             store_row = store.get(agent.id)
+            ui_role = store_row["role"] if store_row is not None else None
+            roles, role_value, role_source = _infer_agent_roles(
+                agent_id=agent.id,
+                agent_name=agent.name,
+                ui_role=ui_role,
+                demand_listing_agents=demand_listing_agents,
+                offer_listing_agents=offer_listing_agents,
+                buyer_contract_agents=buyer_contract_agents,
+                seller_contract_agents=seller_contract_agents,
+            )
             agent_rows.append(
                 {
                     **agent.model_dump(mode="json"),
@@ -165,7 +423,9 @@ def _state_payload(request: Request) -> dict[str, Any]:
                     if heartbeat_map.get(agent.id) is not None
                     else None,
                     "ui_managed": store_row is not None,
-                    "role": store_row["role"] if store_row is not None else None,
+                    "role": role_value,
+                    "roles": roles,
+                    "role_source": role_source,
                 }
             )
 
@@ -176,6 +436,8 @@ def _state_payload(request: Request) -> dict[str, Any]:
         "contracts": [row.model_dump(mode="json") for row in contracts],
         "artifacts": [row.model_dump(mode="json") for row in artifacts],
         "ledger_entries": [row.model_dump(mode="json") for row in ledger_entries],
+        "local_examples": _discover_local_examples(),
+        "local_runs": _local_runs_payload(request.app),
     }
 
 
@@ -192,6 +454,55 @@ def install_dashboard(app: FastAPI) -> None:
     @router.get("/ui/api/state")
     def dashboard_state(request: Request):
         return _state_payload(request)
+
+    @router.get("/ui/api/local/examples")
+    def dashboard_local_examples():
+        return {"examples": _discover_local_examples()}
+
+    @router.post("/ui/api/local/examples/{example_id}/start", status_code=status.HTTP_201_CREATED)
+    def dashboard_start_local_example(example_id: str, request: Request):
+        example = _example_by_id(example_id)
+        run_id = str(uuid4())
+        log_path = _dashboard_run_logs_dir() / f"{example_id}-{run_id}.log"
+        env = os.environ.copy()
+        env.setdefault("PYTHONUNBUFFERED", "1")
+        with log_path.open("ab") as log_file:
+            process = subprocess.Popen(
+                [sys.executable, "-m", example["module"]],
+                cwd=str(_dashboard_project_root()),
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+                env=env,
+            )
+        _local_run_store(request.app)[run_id] = {
+            "example_id": example["id"],
+            "role": example["role"],
+            "module": example["module"],
+            "process": process,
+            "pid": process.pid,
+            "started_at": _utc_now_iso(),
+            "ended_at": None,
+            "returncode": None,
+            "log_path": str(log_path),
+        }
+        return _local_run_payload(run_id, _local_run_store(request.app)[run_id])
+
+    @router.post("/ui/api/local/runs/{run_id}/stop")
+    def dashboard_stop_local_run(run_id: str, request: Request):
+        return _stop_local_run(request.app, run_id)
+
+    @router.get("/ui/api/local/runs/{run_id}/log")
+    def dashboard_local_run_log(run_id: str, request: Request, tail: int = Query(default=200, ge=1, le=5000)):
+        entry = _local_run_store(request.app).get(run_id)
+        if entry is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown local run")
+        log_path_value = entry.get("log_path")
+        log_path = Path(str(log_path_value)) if log_path_value else None
+        return {
+            "run_id": run_id,
+            "tail": tail,
+            "log": _tail_file(log_path, tail) if log_path is not None else "",
+        }
 
     @router.post("/ui/api/agents", status_code=status.HTTP_201_CREATED)
     def dashboard_create_agent(payload: UiAgentCreateRequest, request: Request):
@@ -211,6 +522,7 @@ def install_dashboard(app: FastAPI) -> None:
             lambda client: client.register(agent_card=card if should_send_card else None),
         )
         _ui_store(request.app)[agent["id"]] = {"identity": identity, "role": payload.role}
+        _persist_ui_store(request.app)
         return next(row for row in _state_payload(request)["agents"] if row["id"] == agent["id"])
 
     @router.post("/ui/api/agents/{agent_id}/faucet")

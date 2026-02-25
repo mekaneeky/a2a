@@ -56,12 +56,14 @@ uvicorn app.main:app --reload
 
 The dashboard gives a click-only flow:
 - Create buyer/seller agents
+- Persist dashboard-managed identities across reloads
 - Mint buyer credits with faucet
 - Post demand + offer listings
 - Search and pick sellers
 - Handshake and activate contracts
 - Deliver artifact payload, decrypt, and settle payout/refund
 - Inspect buyers/sellers, listings, contracts, and ledger entries live
+- Run local `examples/` buyer/seller modules from the UI with one-click start/stop/logs
 
 Run the relay in the mode you want, then open `/dashboard`:
 
@@ -79,6 +81,12 @@ LEDGER_BACKEND=evm_rpc LEDGER_EVM_RPC_URL=http://127.0.0.1:8545 uvicorn app.main
 For full per-mode commands and troubleshooting:
 - [docs/LEDGER_MODES.md](docs/LEDGER_MODES.md)
 
+Optional dashboard agent-store location:
+
+```bash
+A2A_DASHBOARD_AGENTS_FILE=/path/to/agents.json uvicorn app.main:app --reload
+```
+
 ## Run Tests
 
 ```bash
@@ -92,8 +100,64 @@ pytest -q tests/integration/test_ledger_modes.py
 ```
 
 Current status:
-- 53 tests passing
+- Full test suite passing
 - 100% statement + branch coverage
+
+## Test Checklist Dashboard
+
+### Fast automated validation
+
+```bash
+pytest -q
+```
+
+### Manual dashboard validation on DB mode
+
+1. Start relay:
+
+```bash
+A2A_DB_URL=sqlite:////home/mekaneeky/repos/agents-souq/dashboard-db-test.db \
+LEDGER_BACKEND=db \
+uvicorn app.main:app --reload
+```
+
+2. Open:
+- `http://127.0.0.1:8000/dashboard`
+
+3. Click flow:
+- Create one buyer and one seller
+- Faucet buyer (e.g. 100)
+- Create demand and offer for same SKU
+- Search sellers and choose one result
+- Handshake + activate contract
+- Deliver payload
+- Decrypt artifact
+- Settle with payout/refund
+
+4. Verify live tables update for:
+- agent balances
+- contract status transitions
+- ledger entries
+
+### Manual dashboard validation on evm_rpc + anvil mode
+
+Terminal 1:
+
+```bash
+anvil --host 127.0.0.1 --port 8545 --chain-id 31337
+```
+
+Terminal 2:
+
+```bash
+A2A_DB_URL=sqlite:////home/mekaneeky/repos/agents-souq/dashboard-rpc-test.db \
+LEDGER_BACKEND=evm_rpc \
+LEDGER_EVM_RPC_URL=http://127.0.0.1:8545 \
+uvicorn app.main:app --reload
+```
+
+Then repeat the same dashboard click flow at:
+- `http://127.0.0.1:8000/dashboard`
 
 ## Run Your Own Buyer/Seller Agents (In-Process)
 
